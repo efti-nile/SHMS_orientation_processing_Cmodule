@@ -1,0 +1,46 @@
+
+~~~ Axe Summary ~~~
+Not compensated axe scale, LSB/g: 256024
+TC(0), ug/*C: -8.714
+(ΔTC = TC(+g) - TC(-g)), ug/*C: 80.446
+TC residuals std., ug/*C: 6.102
+Convenient form of above values to copy-past in a spread sheet:
+256024
+-8.714
+80.446
+6.102
+
+
+~~~ Axe Summary ~~~
+Not compensated axe scale, LSB/g: 257648
+TC(0), ug/*C: 15.15
+(ΔTC = TC(+g) - TC(-g)), ug/*C: 87.299
+TC residuals std., ug/*C: 14.605
+Convenient form of above values to copy-past in a spread sheet:
+257648
+15.15
+87.299
+14.605
+
+
+~~~ Axe Summary ~~~
+Not compensated axe scale, LSB/g: 259108
+TC(0), ug/*C: -6.573
+(ΔTC = TC(+g) - TC(-g)), ug/*C: -2.138
+TC residuals std., ug/*C: 19.303
+Convenient form of above values to copy-past in a spread sheet:
+259108
+-6.573
+-2.138
+19.303
+
+### Accelerometer Summary ###
+Coefficients for linear approximation of the temperature coefficient
+[B] = LSB/*C, [C] = 1/*C:
+                  B            C
+ADXL_ACC_X -2.23097  4.02228e-05
+ADXL_ACC_Y  3.90328  4.36495e-05
+ADXL_ACC_Z -1.70321 -1.06892e-06
+Convenient form of above values to copy-past in a spread sheet:
+-2.2309707210103213 3.9032758007182884 -1.7032134153736795
+4.022282957175404e-05 4.3649462775729814e-05 -1.0689225668683449e-06

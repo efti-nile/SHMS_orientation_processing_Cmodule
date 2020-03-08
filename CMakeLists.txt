@@ -12,7 +12,7 @@ FILE(GLOB LAPACK_SOURCES
         ${CMAKE_SOURCE_DIR}/Lapack/Install/*.c
         )
 
-add_executable(SHMS_orientation_processing_Cmodule main.c)
+add_executable(SHMS_orientation_processing_Cmodule main.c orientation_processing.c orientation_processing.h gauss_newton_algo.c gauss_newton_algo.h)
 target_link_libraries(SHMS_orientation_processing_Cmodule m)
 add_library(linear_algebra STATIC ${LINEAR_ALGEBRA_SOURCES} ${LAPACK_SOURCES})
 target_link_libraries(SHMS_orientation_processing_Cmodule linear_algebra)

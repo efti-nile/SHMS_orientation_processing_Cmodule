@@ -1,0 +1,20 @@
+~~~ SCL_ACC_X ~~~
+Not compensated axe scale, LSB/g: 11947
+TC @ 0g, ug/*C: 41.264
+(TC(+g) - TC(-g)), ug/*C: -53.483
+TC approx. error std., ug/*C: 21.751
+~~~ SCL_ACC_Y ~~~
+Not compensated axe scale, LSB/g: 11946
+TC @ 0g, ug/*C: -87.622
+(TC(+g) - TC(-g)), ug/*C: -46.446
+TC approx. error std., ug/*C: 11.795
+~~~ SCL_ACC_Z ~~~
+Not compensated axe scale, LSB/g: 11942
+TC @ 0g, ug/*C: 149.231
+(TC(+g) - TC(-g)), ug/*C: 38.94
+TC approx. error std., ug/*C: 22.406
+Temperature cefficients, [B] = LSB/*C & [C] = 1/*C:
+                  B            C
+SCL_ACC_X  0.492998 -2.67413e-05
+SCL_ACC_Y  -1.04678 -2.32229e-05
+SCL_ACC_Z   1.78214  1.94699e-05

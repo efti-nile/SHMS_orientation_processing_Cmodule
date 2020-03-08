@@ -1,0 +1,22 @@
+~~~ ADXL_ACC_X ~~~
+Not compensated axe scale, LSB/g: 252520
+TC(0), ug/*C: 5.64
+(ΔTC = TC(+g) - TC(-g)), ug/*C: 87.29
+TC residuals std., ug/*C: 3.913
+~~~ ADXL_ACC_Y ~~~
+Not compensated axe scale, LSB/g: 254937
+TC(0), ug/*C: 3.892
+(ΔTC = TC(+g) - TC(-g)), ug/*C: 92.353
+TC residuals std., ug/*C: 2.585
+~~~ ADXL_ACC_Z ~~~
+Not compensated axe scale, LSB/g: 252017
+TC(0), ug/*C: -18.454
+(ΔTC = TC(+g) - TC(-g)), ug/*C: 16.188
+TC residuals std., ug/*C: 6.755
+
+Coefficients for linear approximation of the temperature coefficient
+[B] = LSB/*C, [C] = 1/*C:
+                   B            C
+ADXL_ACC_X   1.42414  4.36452e-05
+ADXL_ACC_Y  0.992305  4.61764e-05
+ADXL_ACC_Z  -4.65074  8.09385e-06

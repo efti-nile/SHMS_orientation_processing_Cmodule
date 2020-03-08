@@ -1,0 +1,22 @@
+~~~ SCL_ACC_X ~~~
+Not compensated axe scale, LSB/g: 11942
+TC(0), ug/*C: 25.248
+(ΔTC = TC(+g) - TC(-g)), ug/*C: -25.205
+TC residuals std., ug/*C: 2.743
+~~~ SCL_ACC_Y ~~~
+Not compensated axe scale, LSB/g: 11928
+TC(0), ug/*C: -44.718
+(ΔTC = TC(+g) - TC(-g)), ug/*C: -45.209
+TC residuals std., ug/*C: 24.573
+~~~ SCL_ACC_Z ~~~
+Not compensated axe scale, LSB/g: 11944
+TC(0), ug/*C: 59.769
+(ΔTC = TC(+g) - TC(-g)), ug/*C: -14.266
+TC residuals std., ug/*C: 24.251
+
+Coefficients for linear approximation of the temperature coefficient
+[B] = LSB/*C, [C] = 1/*C:
+                  B            C
+SCL_ACC_X  0.301524 -1.26024e-05
+SCL_ACC_Y -0.533432 -2.26045e-05
+SCL_ACC_Z  0.713913 -7.13292e-06
