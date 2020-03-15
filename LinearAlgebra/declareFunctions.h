@@ -27,7 +27,7 @@
 #include "../Lapack/Include/f2c.h"
 // #include "../../src/Lapack/Include/blaswrap.h" // No need in this project! :)
 #include "../Lapack/Include/clapack.h"
-//#include "../qpOASES/Header/qpOASES_e.h"
+#include "../qpOASES/Header/qpOASES_e.h"
 
 
 

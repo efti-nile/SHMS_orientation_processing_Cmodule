@@ -25,22 +25,28 @@ typedef struct {
 } orientation_t;
 
 typedef struct {
-    int id;
-    measurement_t data_buf[GAUSS_NEWTON_WINDOW_SIZE];
-    long int timestamps[GAUSS_NEWTON_WINDOW_SIZE];
-    int data_size;
+    int32_t acc[3];  // raw values
+    uint16_t temp;  // raw values
+} measurement_t;
+
+typedef struct {
+    unsigned int id;
+    double accelerations[GAUSS_NEWTON_WINDOW_SIZE * 3];
+    double temperatures[GAUSS_NEWTON_WINDOW_SIZE];
+    unsigned long int timestamps[GAUSS_NEWTON_WINDOW_SIZE];
+    unsigned int data_size;
     temp_coefs_t temp_coefs;
     axes_coefs_t axes_coefs;
 
     UT_hash_handle hh;
 } sensor_t;
 
-int process(measurement_t *pmeas, int id, orientation_t *porient);
+int process(measurement_t *pmeas, int id, long int timestamp,  orientation_t *porient);
 sensor_t *find_sensor(int id);
 int load_calib_coefs(int id, temp_coefs_t *ptemp_coefs, axes_coefs_t *paxes_coefs);
 int load_temp_coefs(const char *file_name, temp_coefs_t *ptemp_coefs);
-int load_K_matrix(const char *file_name, float *matrix);
-int load_b_vector(const char *file_name, float *vector);
+int load_K_matrix(const char *file_name, double *matrix);
+int load_b_vector(const char *file_name, double *vector);
 void add_sensor(sensor_t *psensor);
 
 #endif //SHMS_ORIENTATION_PROCESSING_CMODULE_ORIENTATION_PROCESSING_H

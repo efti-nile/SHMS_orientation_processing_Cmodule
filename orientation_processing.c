@@ -6,7 +6,7 @@
 
 sensor_t *sensors = NULL;
 
-int process(measurement_t *pmeas, int id, orientation_t *porient) {
+int process(measurement_t *pmeas, int id, long int timestamp, orientation_t *porient) {
     sensor_t *psensor = find_sensor(id);  // try to find...
 
     if (psensor == NULL) {  // if not found create a new sensor instance
@@ -20,9 +20,16 @@ int process(measurement_t *pmeas, int id, orientation_t *porient) {
         add_sensor(psensor);
     }
 
-    psensor->data_buf[psensor->data_size++] = *pmeas;
+    // Add new measurement
+    for (int i = 0; i < 3; ++i) {
+        psensor->accelerations[3 * psensor->data_size + i] = (double) pmeas->acc[i];
+    }
+    psensor->temperatures[psensor->data_size] = (double) pmeas->temp;
+    psensor->timestamps[psensor->data_size] = timestamp;
+    psensor->data_size++;
+
     if (psensor->data_size >= GAUSS_NEWTON_WINDOW_SIZE) {
-        int retval = gauss_newton_calc(pmeas, GAUSS_NEWTON_WINDOW_SIZE,
+        int retval = gauss_newton_calc(psensor->accelerations, psensor->temperatures, GAUSS_NEWTON_WINDOW_SIZE,
                 &porient->angles, &psensor->temp_coefs, &psensor->axes_coefs);
         if (retval == 0) {
             printf("Error in Gauss-Newton algorithm!");
@@ -89,7 +96,7 @@ int load_temp_coefs(const char *file_name, temp_coefs_t *ptemp_coefs) {
                                 ptemp_coefs->C[line_num - 1] = atof(token);
                             }
                         } else {
-                            print("%s:%d: not enough values!", file_name, line_num);
+                            printf("%s:%d: not enough values!", file_name, line_num);
                             return -3;
                         }
                     }
@@ -115,7 +122,7 @@ int load_temp_coefs(const char *file_name, temp_coefs_t *ptemp_coefs) {
 1.099419090058375035e-04,-1.149933568443346115e-03,9.999328195863038671e-01
 
 */
-int load_K_matrix(const char *file_name, float *matrix) {
+int load_K_matrix(const char *file_name, double *matrix) {
     FILE *pfile = fopen(file_name, "r");
     if (pfile != NULL) {
         for (int line_num = 0; line_num < 3; ++line_num) {
@@ -126,7 +133,7 @@ int load_K_matrix(const char *file_name, float *matrix) {
                     if ((token = strtok_r(rest, ",", &rest)) != NULL) {  // get CSV-token
                         matrix[line_num * 3 + col_num] = atof(token);
                     } else {
-                        print("%s:%d: not enough values!", file_name, line_num);
+                        printf("%s:%d: not enough values!", file_name, line_num);
                         return -3;
                     }
                 }
@@ -151,7 +158,7 @@ int load_K_matrix(const char *file_name, float *matrix) {
 1.436852599883027548e-05
 
 */
-int load_b_vector(const char *file_name, float *vector) {
+int load_b_vector(const char *file_name, double *vector) {
     FILE *pfile = fopen(file_name, "r");
     if (pfile != NULL) {
         for (int line_num = 0; line_num < 3; ++line_num) {
