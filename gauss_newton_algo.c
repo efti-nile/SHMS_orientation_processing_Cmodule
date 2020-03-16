@@ -4,24 +4,6 @@
 
 #include "gauss_newton_algo.h"
 
-static const unsigned int axe_reorder_table[6][3] = {
-        {2, 1, 0},
-        {2, 0, 1},
-        {0, 1, 2},
-        {2, 1, 0},
-        {2, 0, 1},
-        {0, 1, 2}
-};
-
-static const bool axe_flips[6][3] = {
-        {false, true, false},
-        {false, false, false},
-        {false, false, false},
-        {false, false, true},
-        {false, true, true},
-        {false, true, true}
-};
-
 static inline void get_rotmat(double *rotmat, double cos_ax, double sin_ax, double cos_ay, double sin_ay) {
     rotmat[0] = cos_ay;  rotmat[1] = sin_ax * sin_ay; rotmat[2] = cos_ax * sin_ay;
     rotmat[3] = 0;       rotmat[4] = cos_ax;          rotmat[5] = -sin_ax;
@@ -43,7 +25,7 @@ static inline void get_dgz(double *dgz, double cos_ax, double sin_ax, double cos
 }
 
 int gauss_newton_calc(double *accelerations, double temperatures[], unsigned  int num_measurements, angles_t *pangles,
-                      temp_coefs_t *ptemp_coefs, axes_coefs_t *paxes_coefs, g_direction_t dir) {
+                      temp_coefs_t *ptemp_coefs, axes_coefs_t *paxes_coefs) {
     // Preprocess data
     convert_temp(temperatures, num_measurements);
     compensate_temp(accelerations, temperatures, num_measurements, ptemp_coefs);
@@ -52,9 +34,9 @@ int gauss_newton_calc(double *accelerations, double temperatures[], unsigned  in
 
     // Gauss-Newton
 
-    double angles[2] = {0};
+    double angles[2] = {0.1, 0.1};
 
-    for (unsigned int iter_num; iter_num < NUM_ITERATIONS; iter_num++) {
+    for (unsigned int iter_num = 0; iter_num < NUM_ITERATIONS; iter_num++) {
         // Precalculate trigonometry
         double cos_ax = cos(angles[0]), sin_ax = sin(angles[0]);
         double cos_ay = cos(angles[1]), sin_ay = sin(angles[1]);
@@ -63,14 +45,15 @@ int gauss_newton_calc(double *accelerations, double temperatures[], unsigned  in
         get_rotmat(rotmat, cos_ax, sin_ax, cos_ay, sin_ay);
 		
 		double g_mod[3], g_ref[3] = {0., 0., 1.};
-		mul(rotmat, g_ref, false, g_mod, 3, 3, 1);
-		
-		double delta[num_measurements*3];  // todo type in everywhere
-		reorder_axes(g_mod, axe_reorder_table[dir], axe_flips[dir]);
-		sub(accelerations, g_mod, delta, num_measurements, 3, 1);
-		// <-- TODO reorder g_mod back
-		double delta_sum[3];
+		mul(g_ref, rotmat, false, g_mod, 1, 3, 3);
+
+		double delta[num_measurements*3], delta_sum[3] = {0};
+		reorder_axes(g_mod, g_dir);
+		for (unsigned int i = 0; i < num_measurements; ++i) {
+		    sub(accelerations + 3 * i, g_mod, delta + 3 * i, 3, 1, 1);
+		}
 		sumrows(delta, delta_sum, num_measurements, 3);
+        bring_axes_back(delta_sum, g_dir);
 		
 		double dx_dy_dz[2*3];
 		get_dgx(dx_dy_dz, cos_ax, sin_ax, cos_ay, sin_ay);
@@ -78,44 +61,86 @@ int gauss_newton_calc(double *accelerations, double temperatures[], unsigned  in
 		get_dgz(dx_dy_dz + 4, cos_ax, sin_ax, cos_ay, sin_ay);
 
 		
-		double dJ[3];
-		mul(dx_dy_dz, delta_sum, false, dJ, 3, 2, 1);
+		double dJ[2];
+		mul(delta_sum, dx_dy_dz, false, dJ, 1, 3, 2);
+		scale(dJ, 2., 1, 2);
 		
 		double Gx[2*2], Gy[2*2], Gz[2*2];
-		mul(dx_dy_dz, dx_dy_dz, false, Gx, 2, 1, 1);  // dx-column * dx-row
-		mul(dx_dy_dz + 2, dx_dy_dz + 2, false, Gx, 2, 1, 1);  // dy-column * dy-row
-		mul(dx_dy_dz + 4, dx_dy_dz + 4, false, Gy, 2, 1, 1);  // dz-column * dz-row
-		
-		double G[2*2] = {0., 0., 0., 0.};
+		mul(dx_dy_dz, dx_dy_dz, false, Gx, 2, 1, 2);  // dx-column * dx-row
+		mul(dx_dy_dz + 2, dx_dy_dz + 2, false, Gy, 2, 1, 2);  // dy-column * dy-row
+		mul(dx_dy_dz + 4, dx_dy_dz + 4, false, Gz, 2, 1, 2);  // dz-column * dz-row
+
+
+		double G[2*2] = {0};
 		add(G, Gx, G, 2, 2, 2);
 		add(G, Gy, G, 2, 2, 2);
 		add(G, Gz, G, 2, 2, 2);
+		scale(G, 2 * (double) num_measurements, 2, 2);
 		
-		double d_angle[2];
-		inv(G, 3);
-		mul(G, dJ, false, d_angle, 2, 2, 1);
+		int retval = inv_2d(G);
+        if (retval != 0) {
+            return ERROR_ZERO_DET;
+        }
+
+        double d_angle[2];
+        mul(G, dJ, false, d_angle, 1, 2, 2);
 		sub(angles, d_angle, angles, 2, 1, 1);
-		
-		if (d_angle[0] * d_angle[0] + d_angle[1] * d_angle[1] < GAUSS_NEWTON_EPSILON) {
+
+		double d_angles_sqnorm = d_angle[0] * d_angle[0] + d_angle[1] * d_angle[1];
+		if (d_angles_sqnorm < EPSILON) {
 		    pangles->ax = angles[0];
 		    pangles->ay = angles[1];
 			return 0;
 		}
     }
 
-    return -1;
+    return ERROR_DOESNT_CONVERGE;
 }
 
-// Reorders a vector of length 3 according order with flips if needed
-// For example:
-// vect3 = {0., 1., 2.}, order = {2, 0, 1}, flips = {false, false, true} result in {2., 0., -1.}
-static void reorder_axes(double *vect3, unsigned int order[3], bool flips[3]) {
+static const unsigned int axe_reorder_table[6][3] = {
+        {2, 1, 0},
+        {2, 0, 1},
+        {0, 1, 2},
+        {2, 1, 0},
+        {2, 0, 1},
+        {0, 1, 2}
+};
+
+static const bool axe_flips[6][3] = {
+        {false, true, false},
+        {false, false, false},
+        {false, false, false},
+        {false, false, true},
+        {false, true, true},
+        {false, true, true}
+};
+
+/*
+    Reorders a vector of length 3 according the direction of g vector. This enables the sensor to work at any position
+    without changes in the algorithm math.
+
+    Example of reorder definition via order and flips arrays:
+        vect3 = {0., 1., 2.}, order = {2, 0, 1}, flips = {false, false, true} result in {2., 0., -1.}
+*/
+static void reorder_axes(double vect3[3], g_direction_t g_dir) {
     double tmp[3];
     for (int i = 0; i < 3; ++i) {
-        tmp[i] = vect3[order[i]];
-        if (flips[i]) {
+        tmp[i] = vect3[axe_reorder_table[g_dir][i]];
+        if (axe_flips[g_dir][i]) {
             tmp[i] *= -1;
         }
+    }
+    memcpy(vect3, tmp, sizeof(tmp));
+}
+
+// This function is an inverse one for reorder_axes function
+static void bring_axes_back(double vect3[3], g_direction_t g_dir) {
+    double tmp[3];
+    for (int i = 0; i < 3; ++i) {
+        if (axe_flips[g_dir][i]) {
+            vect3[i] *= -1;
+        }
+        tmp[axe_reorder_table[g_dir][i]] = vect3[i];
     }
     memcpy(vect3, tmp, sizeof(tmp));
 }
@@ -149,9 +174,9 @@ static g_direction_t normalize(double *accelerations, unsigned int num_measureme
     double sum[3] = {0};
     sumrows(accelerations, sum, num_measurements, 3);
     unsigned int argmax = 0;
-    double max = abs(sum[argmax]);
+    double max = fabs(sum[argmax]);
     for (unsigned int i = 1; i < 3; ++i) {
-        double tmp = abs(sum[i]);
+        double tmp = fabs(sum[i]);
         if (tmp > max) {
             argmax = i;
             max = tmp;
@@ -167,12 +192,26 @@ static g_direction_t normalize(double *accelerations, unsigned int num_measureme
 }
 
 // EmbeddedLapack's norm function doesn't suit so here's mine
-static double l2_norm(double *vect, unsigned int len) {
+static double l2_norm(const double *vect, unsigned int len) {
     double sum = .0;
     for (unsigned int i = 0; i < len; ++i) {
         sum += vect[i] * vect[i];
     }
     return sqrt(sum);
+}
+
+static int inv_2d(double A[2][2]) {
+    double T[2][2];
+    double det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+    if (fabs(det) > FLOAT_ZERO) {
+        T[0][0] = A[1][1]; T[0][1] = -A[0][1];
+        T[1][0] = -A[1][0]; T[1][1] = A[0][0];
+        scale(T, 1 / det, 2, 2);
+        memcpy(A, T, sizeof(T));
+        return 0;
+    } else {
+        return -1;
+    }
 }
 
 static void compensate_axes(double *accelerations, unsigned int num_measurements, axes_coefs_t *paxes_coefs) {

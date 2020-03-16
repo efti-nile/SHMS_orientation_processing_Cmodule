@@ -37,7 +37,7 @@ typedef struct {
     unsigned int data_size;
     temp_coefs_t temp_coefs;
     axes_coefs_t axes_coefs;
-
+    
     UT_hash_handle hh;
 } sensor_t;
 

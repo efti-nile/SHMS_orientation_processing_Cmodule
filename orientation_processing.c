@@ -14,7 +14,7 @@ int process(measurement_t *pmeas, int id, long int timestamp, orientation_t *por
         psensor->data_size = 0;
         psensor->id = id;
         if (load_calib_coefs(id, &psensor->temp_coefs,  &psensor->axes_coefs)) {
-            printf("Can't load calibration coefficients!");
+            printf("Can't load calibration coefficients!\n");
             return PROCESS_RESULT_ERROR;
         }
         add_sensor(psensor);
@@ -29,13 +29,21 @@ int process(measurement_t *pmeas, int id, long int timestamp, orientation_t *por
     psensor->data_size++;
 
     if (psensor->data_size >= GAUSS_NEWTON_WINDOW_SIZE) {
+        psensor->data_size = 0;
         int retval = gauss_newton_calc(psensor->accelerations, psensor->temperatures, GAUSS_NEWTON_WINDOW_SIZE,
                 &porient->angles, &psensor->temp_coefs, &psensor->axes_coefs);
         if (retval == 0) {
-            printf("Error in Gauss-Newton algorithm!");
-            return PROCESS_RESULT_ERROR;
-        } else {
             return PROCESS_RESULT_NEW_ORIENTATION;
+        } else {
+            if (retval == ERROR_DOESNT_CONVERGE) {
+                printf("Gauss-Newton doesn't converge!\n");
+            } else if (retval == ERROR_ZERO_DET) {
+                printf("Gauss-Newton cant't inverse matrix G!\n");
+            } else {
+                printf("Gauss-Newton's circuits dead!\n");
+            }
+
+            return PROCESS_RESULT_ERROR;
         }
     }
 

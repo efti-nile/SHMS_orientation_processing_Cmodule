@@ -12,7 +12,11 @@
 #include "LinearAlgebra/declareFunctions.h"
 
 #define NUM_ITERATIONS 20
-#define GAUSS_NEWTON_EPSILON 1e-6
+#define EPSILON 1e-6
+#define FLOAT_ZERO 1e-12
+
+#define ERROR_DOESNT_CONVERGE (-1)
+#define ERROR_ZERO_DET (-2)
 
 typedef struct {
     double ax;
@@ -36,15 +40,17 @@ typedef enum {
 } g_direction_t;
 
 int gauss_newton_calc(double *, double temperatures[], unsigned  int num_measurements, angles_t *pangles,
-        temp_coefs_t *ptemp_coefs, axes_coefs_t *paxes_coefs, g_direction_t dir);
+        temp_coefs_t *ptemp_coefs, axes_coefs_t *paxes_coefs);
 
 // Local functions
-static void reorder_axes(double *vect3, unsigned int order[3], bool flips[3]);
+static void reorder_axes(double vect3[3], g_direction_t g_dir);
+static void bring_axes_back(double vect3[3], g_direction_t g_dir);
 static void convert_temp(double temperatures[], unsigned int num_measurements);
 static void compensate_temp(double *accelerations, double temperatures[],
                             unsigned int num_measurements, temp_coefs_t *ptemp_coefs);
 static g_direction_t normalize(double *accelerations, unsigned int num_measurements);
-static double l2_norm(double vect[], unsigned int len);
+static double l2_norm(const double *vect, unsigned int len);
+static int inv_2d(double A[2][2]);
 static void compensate_axes(double *accelerations, unsigned int num_measurements, axes_coefs_t *paxes_coefs);
 
 #endif //SHMS_ORIENTATION_PROCESSING_CMODULE_GAUSS_NEWTON_ALGO_H
