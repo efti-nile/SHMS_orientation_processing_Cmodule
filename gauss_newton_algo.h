@@ -6,10 +6,11 @@
 #define SHMS_ORIENTATION_PROCESSING_CMODULE_GAUSS_NEWTON_ALGO_H
 
 #include <stdint-gcc.h>
-#include <glob.h>
 #include <math.h>
+#include <stdbool.h>
+#include <string.h>
 
-#include "LinearAlgebra/declareFunctions.h"
+#include "linear_algebra.h"
 
 #define NUM_ITERATIONS 20
 #define EPSILON 1e-6

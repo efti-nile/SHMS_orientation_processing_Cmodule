@@ -34,7 +34,7 @@ int gauss_newton_calc(double *accelerations, double temperatures[], unsigned  in
 
     // Gauss-Newton
 
-    double angles[2] = {0.1, 0.1};
+    double angles[2] = {0};
 
     for (unsigned int iter_num = 0; iter_num < NUM_ITERATIONS; iter_num++) {
         // Precalculate trigonometry
@@ -77,7 +77,7 @@ int gauss_newton_calc(double *accelerations, double temperatures[], unsigned  in
 		add(G, Gz, G, 2, 2, 2);
 		scale(G, 2 * (double) num_measurements, 2, 2);
 		
-		int retval = inv_2d(G);
+		int retval = inv_2d((double (*)[2]) G);  // 1d G[4] casted to 2d G[2][2]
         if (retval != 0) {
             return ERROR_ZERO_DET;
         }
@@ -88,8 +88,8 @@ int gauss_newton_calc(double *accelerations, double temperatures[], unsigned  in
 
 		double d_angles_sqnorm = d_angle[0] * d_angle[0] + d_angle[1] * d_angle[1];
 		if (d_angles_sqnorm < EPSILON) {
-		    pangles->ax = angles[0];
-		    pangles->ay = angles[1];
+		    pangles->ax = angles[0] * (180.0 / M_PI);
+		    pangles->ay = angles[1] * (180.0 / M_PI);
 			return 0;
 		}
     }
@@ -125,9 +125,9 @@ static const bool axe_flips[6][3] = {
 static void reorder_axes(double vect3[3], g_direction_t g_dir) {
     double tmp[3];
     for (int i = 0; i < 3; ++i) {
-        tmp[i] = vect3[axe_reorder_table[g_dir][i]];
+        tmp[axe_reorder_table[g_dir][i]] = vect3[i];
         if (axe_flips[g_dir][i]) {
-            tmp[i] *= -1;
+            tmp[axe_reorder_table[g_dir][i]] *= -1;
         }
     }
     memcpy(vect3, tmp, sizeof(tmp));
@@ -137,10 +137,10 @@ static void reorder_axes(double vect3[3], g_direction_t g_dir) {
 static void bring_axes_back(double vect3[3], g_direction_t g_dir) {
     double tmp[3];
     for (int i = 0; i < 3; ++i) {
+        tmp[i] = vect3[axe_reorder_table[g_dir][i]];
         if (axe_flips[g_dir][i]) {
-            vect3[i] *= -1;
+            tmp[i] *= -1;
         }
-        tmp[axe_reorder_table[g_dir][i]] = vect3[i];
     }
     memcpy(vect3, tmp, sizeof(tmp));
 }
@@ -174,12 +174,14 @@ static g_direction_t normalize(double *accelerations, unsigned int num_measureme
     double sum[3] = {0};
     sumrows(accelerations, sum, num_measurements, 3);
     unsigned int argmax = 0;
-    double max = fabs(sum[argmax]);
+    double max = sum[argmax];
+    double max_abs = fabs(max);
     for (unsigned int i = 1; i < 3; ++i) {
         double tmp = fabs(sum[i]);
-        if (tmp > max) {
+        if (tmp > max_abs) {
             argmax = i;
-            max = tmp;
+            max_abs = tmp;
+            max = sum[i];
         }
     }
 
@@ -187,7 +189,7 @@ static g_direction_t normalize(double *accelerations, unsigned int num_measureme
     if (max > 0) {
         return (g_direction_t) argmax;  // positive directions
     } else {
-        return (g_direction_t) (argmax + Z_POSITIVE);  // negative directions
+        return (g_direction_t) (argmax + X_NEGATIVE);  // negative directions
     }
 }
 
@@ -200,17 +202,18 @@ static double l2_norm(const double *vect, unsigned int len) {
     return sqrt(sum);
 }
 
+// Inverts 2x2 matrix
 static int inv_2d(double A[2][2]) {
     double T[2][2];
     double det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
     if (fabs(det) > FLOAT_ZERO) {
         T[0][0] = A[1][1]; T[0][1] = -A[0][1];
         T[1][0] = -A[1][0]; T[1][1] = A[0][0];
-        scale(T, 1 / det, 2, 2);
+        scale((double *) T, 1 / det, 2, 2);  // 1d T[2][2] casted to 2d T[4]
         memcpy(A, T, sizeof(T));
         return 0;
     } else {
-        return -1;
+        return -1;  // The det is zero
     }
 }
 
