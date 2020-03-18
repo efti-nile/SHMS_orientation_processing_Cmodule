@@ -43,55 +43,55 @@ int gauss_newton_calc(double *accelerations, double temperatures[], unsigned  in
 
         double rotmat[3*3];  // rotation matrix
         get_rotmat(rotmat, cos_ax, sin_ax, cos_ay, sin_ay);
-		
-		double g_mod[3], g_ref[3] = {0., 0., 1.};
-		mul(g_ref, rotmat, false, g_mod, 1, 3, 3);
 
-		double delta[num_measurements*3], delta_sum[3] = {0};
-		reorder_axes(g_mod, g_dir);
-		for (unsigned int i = 0; i < num_measurements; ++i) {
-		    sub(accelerations + 3 * i, g_mod, delta + 3 * i, 3, 1, 1);
-		}
-		sumrows(delta, delta_sum, num_measurements, 3);
+        double g_mod[3], g_ref[3] = {0., 0., 1.};
+        mul(g_ref, rotmat, false, g_mod, 1, 3, 3);
+
+        double delta[num_measurements*3], delta_sum[3] = {0};
+        reorder_axes(g_mod, g_dir);
+        for (unsigned int i = 0; i < num_measurements; ++i) {
+            sub(accelerations + 3 * i, g_mod, delta + 3 * i, 3, 1, 1);
+        }
+        sumrows(delta, delta_sum, num_measurements, 3);
         bring_axes_back(delta_sum, g_dir);
-		
-		double dx_dy_dz[2*3];
-		get_dgx(dx_dy_dz, cos_ax, sin_ax, cos_ay, sin_ay);
-		get_dgy(dx_dy_dz + 2, cos_ax);
-		get_dgz(dx_dy_dz + 4, cos_ax, sin_ax, cos_ay, sin_ay);
 
-		
-		double dJ[2];
-		mul(delta_sum, dx_dy_dz, false, dJ, 1, 3, 2);
-		scale(dJ, 2., 1, 2);
-		
-		double Gx[2*2], Gy[2*2], Gz[2*2];
-		mul(dx_dy_dz, dx_dy_dz, false, Gx, 2, 1, 2);  // dx-column * dx-row
-		mul(dx_dy_dz + 2, dx_dy_dz + 2, false, Gy, 2, 1, 2);  // dy-column * dy-row
-		mul(dx_dy_dz + 4, dx_dy_dz + 4, false, Gz, 2, 1, 2);  // dz-column * dz-row
+        double dx_dy_dz[2*3];
+        get_dgx(dx_dy_dz, cos_ax, sin_ax, cos_ay, sin_ay);
+        get_dgy(dx_dy_dz + 2, cos_ax);
+        get_dgz(dx_dy_dz + 4, cos_ax, sin_ax, cos_ay, sin_ay);
 
 
-		double G[2*2] = {0};
-		add(G, Gx, G, 2, 2, 2);
-		add(G, Gy, G, 2, 2, 2);
-		add(G, Gz, G, 2, 2, 2);
-		scale(G, 2 * (double) num_measurements, 2, 2);
-		
-		int retval = inv_2d((double (*)[2]) G);  // 1d G[4] casted to 2d G[2][2]
+        double dJ[2];
+        mul(delta_sum, dx_dy_dz, false, dJ, 1, 3, 2);
+        scale(dJ, 2., 1, 2);
+
+        double Gx[2*2], Gy[2*2], Gz[2*2];
+        mul(dx_dy_dz, dx_dy_dz, false, Gx, 2, 1, 2);  // dx-column * dx-row
+        mul(dx_dy_dz + 2, dx_dy_dz + 2, false, Gy, 2, 1, 2);  // dy-column * dy-row
+        mul(dx_dy_dz + 4, dx_dy_dz + 4, false, Gz, 2, 1, 2);  // dz-column * dz-row
+
+
+        double G[2*2] = {0};
+        add(G, Gx, G, 2, 2, 2);
+        add(G, Gy, G, 2, 2, 2);
+        add(G, Gz, G, 2, 2, 2);
+        scale(G, 2 * (double) num_measurements, 2, 2);
+
+        int retval = inv_2d((double (*)[2]) G);  // 1d G[4] casted to 2d G[2][2]
         if (retval != 0) {
             return ERROR_ZERO_DET;
         }
 
         double d_angle[2];
         mul(G, dJ, false, d_angle, 1, 2, 2);
-		sub(angles, d_angle, angles, 2, 1, 1);
+        sub(angles, d_angle, angles, 2, 1, 1);
 
-		double d_angles_sqnorm = d_angle[0] * d_angle[0] + d_angle[1] * d_angle[1];
-		if (d_angles_sqnorm < EPSILON) {
-		    pangles->ax = angles[0] * (180.0 / M_PI);
-		    pangles->ay = angles[1] * (180.0 / M_PI);
-			return 0;
-		}
+        double d_angles_sqnorm = d_angle[0] * d_angle[0] + d_angle[1] * d_angle[1];
+        if (d_angles_sqnorm < EPSILON) {
+            pangles->ax = angles[0] * (180.0 / M_PI);
+            pangles->ay = angles[1] * (180.0 / M_PI);
+            return 0;
+        }
     }
 
     return ERROR_DOESNT_CONVERGE;
@@ -120,7 +120,7 @@ static const bool axe_flips[6][3] = {
     without changes in the algorithm math.
 
     Example of reorder definition via order and flips arrays:
-        vect3 = {0., 1., 2.}, order = {2, 0, 1}, flips = {false, false, true} result in {2., 0., -1.}
+        vect3 = {0., 1., 2.}, order = {2, 0, 1}, flips = {false, false, true} result in {1., -2., 0.}
 */
 static void reorder_axes(double vect3[3], g_direction_t g_dir) {
     double tmp[3];
