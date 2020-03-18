@@ -2,6 +2,8 @@
 // Created by efti-nile on 17.03.2020.
 //
 
+// A little extract of EmbeddedLAPACK library
+
 #ifndef SHMS_ORIENTATION_PROCESSING_CMODULE_LINEAR_ALGEBRA_H
 #define SHMS_ORIENTATION_PROCESSING_CMODULE_LINEAR_ALGEBRA_H
 

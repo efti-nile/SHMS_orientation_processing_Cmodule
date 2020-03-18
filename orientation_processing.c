@@ -33,12 +33,13 @@ int process(measurement_t *pmeas, int id, long int timestamp, orientation_t *por
         int retval = gauss_newton_calc(psensor->accelerations, psensor->temperatures, GAUSS_NEWTON_WINDOW_SIZE,
                 &porient->angles, &psensor->temp_coefs, &psensor->axes_coefs);
         if (retval == 0) {
+            porient->timestamp = psensor->timestamps[GAUSS_NEWTON_WINDOW_SIZE-1];
             return PROCESS_RESULT_NEW_ORIENTATION;
         } else {
             if (retval == ERROR_DOESNT_CONVERGE) {
                 printf("Gauss-Newton doesn't converge!\n");
             } else if (retval == ERROR_ZERO_DET) {
-                printf("Gauss-Newton cant't inverse matrix G!\n");
+                printf("Gauss-Newton can't invert matrix G!\n");
             } else {
                 printf("Gauss-Newton's circuits dead!\n");
             }

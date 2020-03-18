@@ -2,6 +2,8 @@
 // Created by efti-nile on 17.03.2020.
 //
 
+// A little extract of EmbeddedLAPACK library
+
 #include "linear_algebra.h"
 
 /*
