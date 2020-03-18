@@ -33,6 +33,7 @@ int process(measurement_t *pmeas, int id, long int timestamp, orientation_t *por
         int retval = gauss_newton_calc(psensor->accelerations, psensor->temperatures, GAUSS_NEWTON_WINDOW_SIZE,
                 &porient->angles, &psensor->temp_coefs, &psensor->axes_coefs);
         if (retval == 0) {
+            porient->timestamp = psensor->timestamps[GAUSS_NEWTON_WINDOW_SIZE-1];
             return PROCESS_RESULT_NEW_ORIENTATION;
         } else {
             if (retval == ERROR_DOESNT_CONVERGE) {
